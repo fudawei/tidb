@@ -207,16 +207,20 @@ func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, rang
 			ran.LowExclude, ran.HighExclude = ran.HighExclude, ran.LowExclude
 		}
 
-		//for _, v := range ran.LowVal {
-		//	log.Infof("[yusp] check low val %d", v.GetInt64())
-		//	log.Infof("[yusp] check low kind %d", v.Kind())
+		//if tid > 21 {
+		//	log.Infof("[yusp] begin check %d", tid)
+		//	for _, v := range ran.LowVal {
+		//		log.Infof("[yusp] check low val %d", v.GetInt64())
+		//		log.Infof("[yusp] check low kind %d", v.Kind())
+		//	}
+		//	for _, v := range ran.HighVal {
+		//		log.Infof("[yusp] check high val %d", v.GetInt64())
+		//		log.Infof("[yusp] check high kind %d", v.Kind())
+		//	}
+		//	log.Infof("[yusp] LowExclude %t", ran.LowExclude)
+		//	log.Infof("[yusp] HighExclude %t", ran.HighExclude)
+		//	log.Infof("[yusp] end check")
 		//}
-		//for _, v := range ran.HighVal {
-		//	log.Infof("[yusp] check high val %d", v.GetInt64())
-		//	log.Infof("[yusp] check high kind %d", v.Kind())
-		//}
-		//log.Infof("[yusp] LowExclude %t", ran.LowExclude)
-		//log.Infof("[yusp] HighExclude %t", ran.HighExclude)
 		low, err := codec.EncodeKey(nil, ran.LowVal...)
 		if err != nil {
 			return nil, errors.Trace(err)
@@ -234,7 +238,12 @@ func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, rang
 		startKey := tablecodec.EncodeIndexSeekKey(tid, idxID, low)
 		endKey := tablecodec.EncodeIndexSeekKey(tid, idxID, high)
 		//log.Infof("[yusp] tid %d, idxId %d, high %d, low %d", tid, idxID, ran.HighVal, ran.LowVal)
-		krs = append(krs, kv.KeyRange{StartKey: startKey, EndKey: endKey})
+		if descIndex {
+			// If the index is in desc order, we append key range in backward.
+			krs = append([]kv.KeyRange{{StartKey: startKey, EndKey: endKey}}, krs...)
+		} else {
+			krs = append(krs, kv.KeyRange{StartKey: startKey, EndKey: endKey})
+		}
 	}
 	return krs, nil
 }
@@ -686,7 +695,9 @@ func (e *XSelectIndexExec) doIndexRequest() (distsql.SelectResult, error) {
 	if e.desc {
 		selIdxReq.OrderBy = []*tipb.ByItem{{Desc: e.desc}}
 	}
-	//log.Infof("[yusp] e.desc %t", e.desc)
+	//if e.table.Meta().ID > 21 {
+	//	log.Infof("[yusp] e.desc %t", e.desc)
+	//}
 	// If the index is single read, we can push topN down.
 	if e.singleReadMode {
 		selIdxReq.Limit = e.limitCount
