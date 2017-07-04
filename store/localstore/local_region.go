@@ -727,17 +727,6 @@ func (rs *localRegion) getIndexRowFromRange(ctx *selectContext, ran kv.KeyRange,
 	idxInfo := ctx.sel.IndexInfo
 	txn := ctx.txn
 
-	//order := false
-	//for _, column := range idxInfo.Columns {
-	//	if column.Order {
-	//		order = true
-	//		break
-	//	}
-	//}
-	//if order {
-	//	desc = !desc
-	//}
-
 	var seekKey kv.Key
 	if desc {
 		seekKey = ran.EndKey

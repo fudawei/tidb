@@ -17,7 +17,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	//"github.com/ngaut/log"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/ast"
 	"github.com/pingcap/tidb/context"
@@ -33,7 +32,6 @@ import (
 	"github.com/pingcap/tidb/terror"
 	"github.com/pingcap/tidb/util/ranger"
 	"github.com/pingcap/tidb/util/types"
-	//"github.com/pingcap/tidb/util/codec"
 )
 
 var (
@@ -476,10 +474,6 @@ func (e *SelectionExec) Next() (*Row, error) {
 		if srcRow == nil {
 			return nil, nil
 		}
-		//for _, v := range srcRow.Data {
-		//	codec.ReverseComparableDatum(&v)
-		//	log.Infof("[yusp] %d", v.GetInt64())
-		//}
 		match, err := expression.EvalBool(e.Conditions, srcRow.Data, e.ctx)
 		if err != nil {
 			return nil, errors.Trace(err)

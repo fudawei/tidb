@@ -16,7 +16,6 @@ package plan
 import (
 	"math"
 
-	//"github.com/ngaut/log"
 	"github.com/pingcap/tidb/model"
 	"github.com/pingcap/tidb/util/types"
 )
@@ -153,9 +152,6 @@ func (is *PhysicalIndexScan) matchProperty(prop *requiredProperty, infos ...*phy
 			if is.Index.Columns[0].Desc {
 				sortedIS.Desc = !sortedIS.Desc
 			}
-			//log.Infof("[yusp] allDesc %t", allDesc)
-			//log.Infof("[yusp] allAsc %t", allAsc)
-			//log.Infof("[yusp] sortedIS.Desc %t", sortedIS.Desc)
 			sortedIS.addLimit(prop.limit)
 			p := sortedIS.tryToAddUnionScan(sortedIS)
 			return enforceProperty(&requiredProperty{limit: prop.limit}, &physicalPlanInfo{

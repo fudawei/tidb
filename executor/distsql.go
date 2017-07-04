@@ -157,20 +157,9 @@ func tableHandlesToKVRanges(tid int64, handles []int64) []kv.KeyRange {
 }
 
 // indexValuesToKVRanges will convert the index datums to kv ranges.
-func indexValuesToKVRanges(tid, idxID int64, values [][]types.Datum, descIndex []int) ([]kv.KeyRange, error) {
+func indexValuesToKVRanges(tid, idxID int64, values [][]types.Datum) ([]kv.KeyRange, error) {
 	krs := make([]kv.KeyRange, 0, len(values))
 	for _, vals := range values {
-		//log.Infof("[yusp] maybe enter indexValuesToKVRanges")
-		/*
-			for _, desc := range descIndex {
-				for i, v := range vals {
-					if i == desc {
-						codec.ReverseComparableDatum(&v)
-					}
-				}
-			}
-		*/
-
 		// TODO: We don't process the case that equal key has different types.
 		valKey, err := codec.EncodeKey(nil, vals...)
 		if err != nil {
@@ -182,7 +171,7 @@ func indexValuesToKVRanges(tid, idxID int64, values [][]types.Datum, descIndex [
 	return krs, nil
 }
 
-func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, ranges []*types.IndexRange, fieldTypes []*types.FieldType, descIndex bool) ([]kv.KeyRange, error) {
+func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, ranges []*types.IndexRange, fieldTypes []*types.FieldType) ([]kv.KeyRange, error) {
 	krs := make([]kv.KeyRange, 0, len(ranges))
 	for _, ran := range ranges {
 		err := convertIndexRangeTypes(sc, ran, fieldTypes)
@@ -190,37 +179,6 @@ func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, rang
 			return nil, errors.Trace(err)
 		}
 
-		if descIndex {
-			// len(ran.HighVal) should equal to len(ran.LowVal)
-			for i := 0; i < len(ran.HighVal); i++ {
-				if (ran.LowVal[i].Kind() == types.KindNull) && (ran.HighVal[i].Kind() == types.KindMaxValue) {
-					// For order by full range (without where condition),
-					// LowVal should be null type and HighVal should be max value.
-					ran.LowVal[i].SetKind(types.KindMaxValue)
-					ran.HighVal[i].SetKind(types.KindNull)
-				} else {
-					codec.ReverseComparableDatum(&ran.LowVal[i])
-					codec.ReverseComparableDatum(&ran.HighVal[i])
-				}
-			}
-			ran.LowVal, ran.HighVal = ran.HighVal, ran.LowVal
-			ran.LowExclude, ran.HighExclude = ran.HighExclude, ran.LowExclude
-		}
-
-		//if tid > 21 {
-		//	log.Infof("[yusp] begin check %d", tid)
-		//	for _, v := range ran.LowVal {
-		//		log.Infof("[yusp] check low val %d", v.GetInt64())
-		//		log.Infof("[yusp] check low kind %d", v.Kind())
-		//	}
-		//	for _, v := range ran.HighVal {
-		//		log.Infof("[yusp] check high val %d", v.GetInt64())
-		//		log.Infof("[yusp] check high kind %d", v.Kind())
-		//	}
-		//	log.Infof("[yusp] LowExclude %t", ran.LowExclude)
-		//	log.Infof("[yusp] HighExclude %t", ran.HighExclude)
-		//	log.Infof("[yusp] end check")
-		//}
 		low, err := codec.EncodeKey(nil, ran.LowVal...)
 		if err != nil {
 			return nil, errors.Trace(err)
@@ -237,13 +195,7 @@ func indexRangesToKVRanges(sc *variable.StatementContext, tid, idxID int64, rang
 		}
 		startKey := tablecodec.EncodeIndexSeekKey(tid, idxID, low)
 		endKey := tablecodec.EncodeIndexSeekKey(tid, idxID, high)
-		//log.Infof("[yusp] tid %d, idxId %d, high %d, low %d", tid, idxID, ran.HighVal, ran.LowVal)
-		if descIndex {
-			// If the index is in desc order, we append key range in backward.
-			krs = append([]kv.KeyRange{{StartKey: startKey, EndKey: endKey}}, krs...)
-		} else {
-			krs = append(krs, kv.KeyRange{StartKey: startKey, EndKey: endKey})
-		}
+		krs = append(krs, kv.KeyRange{StartKey: startKey, EndKey: endKey})
 	}
 	return krs, nil
 }
@@ -491,8 +443,6 @@ func (e *XSelectIndexExec) nextForSingleRead() (*Row, error) {
 		e.execStart = time.Now()
 		var err error
 		e.result, err = e.doIndexRequest()
-		//log.Infof("[yusp] e.result %s", e.result)
-		//log.Infof("[yusp] single read")
 		if err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -546,9 +496,6 @@ func (e *XSelectIndexExec) nextForSingleRead() (*Row, error) {
 		if e.aggregate {
 			return &Row{Data: values}, nil
 		}
-		//for _, v := range values {
-		//	log.Infof("[yusp], %d", v.GetInt64())
-		//}
 		values = e.indexRowToTableRow(h, values)
 		return resultRowToRow(e.table, h, values, e.asName), nil
 	}
@@ -695,9 +642,6 @@ func (e *XSelectIndexExec) doIndexRequest() (distsql.SelectResult, error) {
 	if e.desc {
 		selIdxReq.OrderBy = []*tipb.ByItem{{Desc: e.desc}}
 	}
-	//if e.table.Meta().ID > 21 {
-	//	log.Infof("[yusp] e.desc %t", e.desc)
-	//}
 	// If the index is single read, we can push topN down.
 	if e.singleReadMode {
 		selIdxReq.Limit = e.limitCount
@@ -719,15 +663,10 @@ func (e *XSelectIndexExec) doIndexRequest() (distsql.SelectResult, error) {
 		fieldTypes[i] = &(e.table.Cols()[v.Offset].FieldType)
 	}
 	sc := e.ctx.GetSessionVars().StmtCtx
-	keyRanges, err := indexRangesToKVRanges(sc, e.table.Meta().ID, e.index.ID, e.ranges, fieldTypes, e.index.Columns[0].Desc)
+	keyRanges, err := indexRangesToKVRanges(sc, e.table.Meta().ID, e.index.ID, e.ranges, fieldTypes)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	//log.Infof("[yusp] outOfOrder %t", e.outOfOrder)
-	//log.Infof("[yusp] selIdxReq %s", selIdxReq)
-	//log.Infof("[yusp] e.scanConcurrendy %s", e.scanConcurrency)
-	//log.Infof("[yusp] e.ctx.GetClient() %s", e.ctx.GetClient())
-	//log.Infof("[yusp] e.ctx.GoCtx() %s", e.ctx.GoCtx())
 	return distsql.Select(e.ctx.GetClient(), e.ctx.GoCtx(), selIdxReq, keyRanges, e.scanConcurrency, !e.outOfOrder)
 }
 

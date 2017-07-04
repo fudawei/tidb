@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"io"
 
-	//"github.com/ngaut/log"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/model"
@@ -85,22 +84,11 @@ func (c *indexIter) Next() (val []types.Datum, h int64, err error) {
 		}
 		val = vv
 	}
-	//for i, c := range c.idx.idxInfo.Columns {
-	//	if c.Desc {
-	//		codec.ReverseComparableDatum(&val[i])
-	//	}
-	//}
-
 	// update new iter to next
 	err = c.it.Next()
 	if err != nil {
 		return nil, 0, errors.Trace(err)
 	}
-	//for i, c := range c.idx.idxInfo.Columns {
-	//	if c.Desc {
-	//		codec.ReverseComparableDatum(&val[i])
-	//	}
-	//}
 	return
 }
 
@@ -145,9 +133,7 @@ func (c *index) GenIndexKey(indexedValues []types.Datum, h int64) (key []byte, d
 
 	if c.idxInfo.Columns[0].Desc {
 		for i := range c.idxInfo.Columns {
-			//log.Infof("[yusp] normal value %d", indexedValues[i].GetInt64())
 			codec.ReverseComparableDatum(&indexedValues[i])
-			//log.Infof("[yusp] reversed value %d", indexedValues[i].GetInt64())
 		}
 	}
 
@@ -302,11 +288,6 @@ func (c *index) FetchValues(r []types.Datum) ([]types.Datum, error) {
 			return nil, table.ErrIndexOutBound.Gen("Index column %s offset out of bound, offset: %d, row: %v",
 				ic.Name, ic.Offset, r)
 		}
-		/*
-			if ic.Desc {
-				codec.ReverseComparableDatum(&r[ic.Offset])
-			}
-		*/
 		vals[i] = r[ic.Offset]
 	}
 	return vals, nil

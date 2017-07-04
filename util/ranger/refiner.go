@@ -22,8 +22,8 @@ import (
 	"github.com/pingcap/tidb/model"
 	"github.com/pingcap/tidb/mysql"
 	"github.com/pingcap/tidb/sessionctx/variable"
+	"github.com/pingcap/tidb/util/codec"
 	"github.com/pingcap/tidb/util/types"
-	//	"github.com/pingcap/tidb/util/codec"
 )
 
 // fullRange is (-∞, +∞).
@@ -82,34 +82,42 @@ func BuildIndexRange(sc *variable.StatementContext, tblInfo *model.TableInfo, in
 
 	if len(ranges) > 0 && len(ranges[0].LowVal) < len(index.Columns) {
 		for _, ran := range ranges {
-			if ran.HighExclude || ran.LowExclude {
-				if ran.HighExclude {
-					ran.HighVal = append(ran.HighVal, types.NewDatum(nil))
-				} else {
-					ran.HighVal = append(ran.HighVal, types.MaxValueDatum())
-				}
-				if ran.LowExclude {
-					ran.LowVal = append(ran.LowVal, types.MaxValueDatum())
-				} else {
-					ran.LowVal = append(ran.LowVal, types.NewDatum(nil))
-				}
+			if ran.HighExclude {
+				ran.HighVal = append(ran.HighVal, types.NewDatum(nil))
+			} else {
+				ran.HighVal = append(ran.HighVal, types.MaxValueDatum())
+			}
+			if ran.LowExclude {
+				ran.LowVal = append(ran.LowVal, types.MaxValueDatum())
+			} else {
+				ran.LowVal = append(ran.LowVal, types.NewDatum(nil))
 			}
 		}
 	}
-	/*
-		for _, r := range ranges {
-			for i, l := range r.LowVal {
-				if index.Columns[i].Desc {
-					codec.ReverseComparableDatum(&l)
+
+	if index.Columns[0].Desc {
+		var descRanges []*types.IndexRange
+		for _, ran := range ranges {
+			// len(ran.HighVal) should equal to len(ran.LowVal)
+			for i := 0; i < len(ran.HighVal); i++ {
+				if (ran.LowVal[i].Kind() == types.KindNull) && (ran.HighVal[i].Kind() == types.KindMaxValue) {
+					// For order by full range (without where condition),
+					// LowVal should be null type and HighVal should be max value.
+					ran.LowVal[i].SetKind(types.KindMaxValue)
+					ran.HighVal[i].SetKind(types.KindNull)
+				} else {
+					codec.ReverseComparableDatum(&ran.LowVal[i])
+					codec.ReverseComparableDatum(&ran.HighVal[i])
 				}
 			}
-			for i, l := range r.HighVal {
-				if index.Columns[i].Desc {
-					codec.ReverseComparableDatum(&l)
-				}
-			}
+			ran.LowVal, ran.HighVal = ran.HighVal, ran.LowVal
+			ran.LowExclude, ran.HighExclude = ran.HighExclude, ran.LowExclude
+			// Ranges append in desc order
+			descRanges = append([]*types.IndexRange{ran}, descRanges...)
 		}
-	*/
+		return descRanges, errors.Trace(rb.err)
+
+	}
 	return ranges, errors.Trace(rb.err)
 }
 

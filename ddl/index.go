@@ -32,7 +32,6 @@ import (
 	"github.com/pingcap/tidb/terror"
 	"github.com/pingcap/tidb/util"
 	"github.com/pingcap/tidb/util/types"
-	//"github.com/pingcap/tidb/util/codec"
 )
 
 const maxPrefixLength = 3072
