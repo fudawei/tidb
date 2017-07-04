@@ -23,7 +23,7 @@ import (
 	"github.com/pingcap/tidb/mysql"
 	"github.com/pingcap/tidb/sessionctx/variable"
 	"github.com/pingcap/tidb/util/types"
-//	"github.com/pingcap/tidb/util/codec"
+	//	"github.com/pingcap/tidb/util/codec"
 )
 
 // fullRange is (-∞, +∞).
@@ -96,20 +96,20 @@ func BuildIndexRange(sc *variable.StatementContext, tblInfo *model.TableInfo, in
 			}
 		}
 	}
-/*
-	for _, r := range ranges {
-		for i, l := range r.LowVal {
-			if index.Columns[i].Desc {
-				codec.ReverseComparableDatum(&l)
+	/*
+		for _, r := range ranges {
+			for i, l := range r.LowVal {
+				if index.Columns[i].Desc {
+					codec.ReverseComparableDatum(&l)
+				}
+			}
+			for i, l := range r.HighVal {
+				if index.Columns[i].Desc {
+					codec.ReverseComparableDatum(&l)
+				}
 			}
 		}
-		for i, l := range r.HighVal {
-			if index.Columns[i].Desc {
-				codec.ReverseComparableDatum(&l)
-			}
-		}
-	}
-*/
+	*/
 	return ranges, errors.Trace(rb.err)
 }
 

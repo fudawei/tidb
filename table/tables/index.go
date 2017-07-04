@@ -303,9 +303,9 @@ func (c *index) FetchValues(r []types.Datum) ([]types.Datum, error) {
 				ic.Name, ic.Offset, r)
 		}
 		/*
-		if ic.Desc {
-			codec.ReverseComparableDatum(&r[ic.Offset])
-		}
+			if ic.Desc {
+				codec.ReverseComparableDatum(&r[ic.Offset])
+			}
 		*/
 		vals[i] = r[ic.Offset]
 	}

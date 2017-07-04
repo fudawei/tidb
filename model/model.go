@@ -166,8 +166,8 @@ type IndexColumn struct {
 	// Length of prefix when using column prefix
 	// for indexing;
 	// UnspecifedLength if not using prefix indexing
-	Length int   `json:"length"`
-	Desc   bool  `json:"desc"` // Index order: false(asc), true(desc)
+	Length int  `json:"length"`
+	Desc   bool `json:"desc"` // Index order: false(asc), true(desc)
 }
 
 // Clone clones IndexColumn.

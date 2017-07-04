@@ -756,12 +756,12 @@ func (p *DataSource) convertToIndexScan(prop *requiredProp, idx *model.IndexInfo
 			is.Desc = true
 			cop.cst = rowCount * descScanFactor
 			/*
-			for _, v := range idx.Columns {
-				if v.Desc {
-					is.Desc = false
-					break
+				for _, v := range idx.Columns {
+					if v.Desc {
+						is.Desc = false
+						break
+					}
 				}
-			}
 			*/
 		}
 		is.addPushedDownSelection(cop)

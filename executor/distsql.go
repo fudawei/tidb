@@ -162,13 +162,13 @@ func indexValuesToKVRanges(tid, idxID int64, values [][]types.Datum, descIndex [
 	for _, vals := range values {
 		//log.Infof("[yusp] maybe enter indexValuesToKVRanges")
 		/*
-		for _, desc := range descIndex {
-			for i, v := range vals {
-				if i == desc {
-					codec.ReverseComparableDatum(&v)
+			for _, desc := range descIndex {
+				for i, v := range vals {
+					if i == desc {
+						codec.ReverseComparableDatum(&v)
+					}
 				}
 			}
-		}
 		*/
 
 		// TODO: We don't process the case that equal key has different types.

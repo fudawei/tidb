@@ -87,12 +87,12 @@ func (h *rpcHandler) handleCopRequest(req *coprocessor.Request) (*coprocessor.Re
 			if sel.OrderBy[0].Expr == nil {
 				ctx.descScan = sel.OrderBy[0].Desc
 				/*
-				for _, v := range sel.IndexInfo.Columns {
-					if v.GetDesc() {
-						ctx.descScan = !ctx.descScan
-						break
+					for _, v := range sel.IndexInfo.Columns {
+						if v.GetDesc() {
+							ctx.descScan = !ctx.descScan
+							break
+						}
 					}
-				}
 				*/
 				//log.Infof("[yusp] sel.OrderBy[0].Desc %t", sel.OrderBy[0].Desc)
 				//log.Infof("[yusp] ctx.descScan %t", ctx.descScan)
@@ -577,12 +577,12 @@ func (h *rpcHandler) getIndexRowFromRange(ctx *selectContext, ran kv.KeyRange, l
 	}
 
 	/*
-	for _, c := range idxInfo.Columns {
-		if c.GetDesc() {
-			ctx.descScan = !ctx.descScan
-			break
+		for _, c := range idxInfo.Columns {
+			if c.GetDesc() {
+				ctx.descScan = !ctx.descScan
+				break
+			}
 		}
-	}
 	*/
 
 	//log.Infof("[yusp] ctx.descScan %t", ctx.descScan)

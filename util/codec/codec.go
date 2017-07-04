@@ -39,6 +39,7 @@ const (
 	maxFlag          byte = 250
 )
 
+// ReverseComparableDatum reverse datum which could be comparable.
 func ReverseComparableDatum(val *types.Datum) {
 	switch val.Kind() {
 	case types.KindInt64:
@@ -73,8 +74,8 @@ func ReverseComparableDatum(val *types.Datum) {
 		val.SetKind(types.KindMaxValue)
 	case types.KindMaxValue:
 		val.SetKind(types.KindMinNotNull)
-	//default:
-	//	return errors.Errorf("type %d is not comparable", val.Kind())
+		//default:
+		//	return errors.Errorf("type %d is not comparable", val.Kind())
 	}
 }
 
