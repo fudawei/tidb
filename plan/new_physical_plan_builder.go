@@ -755,6 +755,14 @@ func (p *DataSource) convertToIndexScan(prop *requiredProp, idx *model.IndexInfo
 		if prop.desc {
 			is.Desc = true
 			cop.cst = rowCount * descScanFactor
+			/*
+			for _, v := range idx.Columns {
+				if v.Desc {
+					is.Desc = false
+					break
+				}
+			}
+			*/
 		}
 		is.addPushedDownSelection(cop)
 		task = tryToAddUnionScan(cop, p.pushedDownConds, p.ctx, p.allocator)

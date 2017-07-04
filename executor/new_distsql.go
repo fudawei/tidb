@@ -220,14 +220,10 @@ func (e *IndexReaderExecutor) Next() (*Row, error) {
 func (e *IndexReaderExecutor) Open() error {
 	fieldTypes := make([]*types.FieldType, len(e.index.Columns))
 
-	descIndex := []int{}
 	for i, v := range e.index.Columns {
 		fieldTypes[i] = &(e.table.Cols()[v.Offset].FieldType)
-		if v.Desc {
-			descIndex = append(descIndex, i)
-		}
 	}
-	kvRanges, err := indexRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, e.tableID, e.index.ID, e.ranges, fieldTypes, descIndex)
+	kvRanges, err := indexRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, e.tableID, e.index.ID, e.ranges, fieldTypes, e.index.Columns[0].Desc )
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -291,14 +287,16 @@ func (e *IndexLookUpExecutor) Open() error {
 		fieldTypes[i] = &(e.table.Cols()[v.Offset].FieldType)
 	}
 
+	/*
 	descIndex := []int{}
 	for i, column := range e.index.Columns {
 		if column.Desc {
 			descIndex = append(descIndex, i)
 		}
 	}
+	*/
 
-	kvRanges, err := indexRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, e.tableID, e.index.ID, e.ranges, fieldTypes, descIndex)
+	kvRanges, err := indexRangesToKVRanges(e.ctx.GetSessionVars().StmtCtx, e.tableID, e.index.ID, e.ranges, fieldTypes, e.index.Columns[0].Desc)
 	if err != nil {
 		return errors.Trace(err)
 	}

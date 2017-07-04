@@ -19,6 +19,7 @@ import (
 	"sort"
 	"time"
 
+	//"github.com/ngaut/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/juju/errors"
 	"github.com/pingcap/kvproto/pkg/coprocessor"
@@ -85,6 +86,16 @@ func (h *rpcHandler) handleCopRequest(req *coprocessor.Request) (*coprocessor.Re
 		if len(sel.OrderBy) > 0 {
 			if sel.OrderBy[0].Expr == nil {
 				ctx.descScan = sel.OrderBy[0].Desc
+				/*
+				for _, v := range sel.IndexInfo.Columns {
+					if v.GetDesc() {
+						ctx.descScan = !ctx.descScan
+						break
+					}
+				}
+				*/
+				//log.Infof("[yusp] sel.OrderBy[0].Desc %t", sel.OrderBy[0].Desc)
+				//log.Infof("[yusp] ctx.descScan %t", ctx.descScan)
 			} else {
 				if sel.Limit == nil {
 					return nil, errors.New("We don't support pushing down Sort without Limit")
@@ -459,6 +470,20 @@ func (h *rpcHandler) valuesToRow(ctx *selectContext, handle int64, values map[in
 		columns = ctx.sel.TableInfo.Columns
 	} else {
 		columns = ctx.sel.IndexInfo.Columns
+		//for _, c := range columns {
+		//	if c.GetDesc() {
+		//		_, descDatum, err := codec.DecodeOne(values[c.GetColumnId()])
+		//		if err != nil {
+		//			return nil, errors.Trace(err)
+		//		}
+		//		codec.ReverseComparableDatum(&descDatum)
+		//		encodedDescDatum, err := codec.EncodeKey(nil, descDatum)
+		//		if err != nil {
+		//			return nil, errors.Trace(err)
+		//		}
+		//		values[c.GetColumnId()] = encodedDescDatum
+		//	}
+		//}
 	}
 	// Evaluate where
 	match, err := h.evalWhereForRow(ctx, handle, values)
@@ -560,6 +585,8 @@ func (h *rpcHandler) getIndexRowFromRange(ctx *selectContext, ran kv.KeyRange, l
 	}
 	*/
 
+	//log.Infof("[yusp] ctx.descScan %t", ctx.descScan)
+
 	var seekKey kv.Key
 	if ctx.descScan {
 		seekKey = endKey
@@ -609,28 +636,16 @@ func (h *rpcHandler) getIndexRowFromRange(ctx *selectContext, ran kv.KeyRange, l
 		if len(b) > 0 {
 			var handleDatum types.Datum
 			_, handleDatum, err = codec.DecodeOne(b)
+			//log.Infof("[yusp] not unique index")
 			if err != nil {
 				return nil, errors.Trace(err)
 			}
 			handle = handleDatum.GetInt64()
 		} else {
 			handle, err = decodeHandle(pair.Value)
+			//log.Infof("[yusp] not unique index")
 			if err != nil {
 				return nil, errors.Trace(err)
-			}
-		}
-		for _, c := range idxInfo.Columns {
-			if c.GetDesc() {
-				_, descDatum, err := codec.DecodeOne(values[c.GetColumnId()])
-				if err != nil {
-					return nil, errors.Trace(err)
-				}
-				codec.ReverseComparableDatum(&descDatum)
-				encodedDescDatum, err := codec.EncodeKey(nil, descDatum)
-				if err != nil {
-					return nil, errors.Trace(err)
-				}
-				values[c.GetColumnId()] = encodedDescDatum
 			}
 		}
 		row, err := h.valuesToRow(ctx, handle, values)

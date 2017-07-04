@@ -543,7 +543,7 @@ func (b *planBuilder) buildSort(p LogicalPlan, byItems []*ast.ByItem, aggMapper 
 			return nil
 		}
 		p = np
-		exprs = append(exprs, &ByItems{Expr: it, Desc: false})
+		exprs = append(exprs, &ByItems{Expr: it, Desc: item.Desc})
 	}
 	sort.ByItems = exprs
 	addChild(sort, p)

@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"io"
 
+	//"github.com/ngaut/log"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/model"
@@ -84,22 +85,22 @@ func (c *indexIter) Next() (val []types.Datum, h int64, err error) {
 		}
 		val = vv
 	}
-	for i, c := range c.idx.idxInfo.Columns {
-		if c.Desc {
-			codec.ReverseComparableDatum(&val[i])
-		}
-	}
+	//for i, c := range c.idx.idxInfo.Columns {
+	//	if c.Desc {
+	//		codec.ReverseComparableDatum(&val[i])
+	//	}
+	//}
 
 	// update new iter to next
 	err = c.it.Next()
 	if err != nil {
 		return nil, 0, errors.Trace(err)
 	}
-	for i, c := range c.idx.idxInfo.Columns {
-		if c.Desc {
-			codec.ReverseComparableDatum(&val[i])
-		}
-	}
+	//for i, c := range c.idx.idxInfo.Columns {
+	//	if c.Desc {
+	//		codec.ReverseComparableDatum(&val[i])
+	//	}
+	//}
 	return
 }
 
@@ -142,9 +143,11 @@ func (c *index) GenIndexKey(indexedValues []types.Datum, h int64) (key []byte, d
 		}
 	}
 
-	for i, column := range c.idxInfo.Columns {
-		if column.Desc {
+	if c.idxInfo.Columns[0].Desc {
+		for i := range c.idxInfo.Columns {
+			//log.Infof("[yusp] normal value %d", indexedValues[i].GetInt64())
 			codec.ReverseComparableDatum(&indexedValues[i])
+			//log.Infof("[yusp] reversed value %d", indexedValues[i].GetInt64())
 		}
 	}
 

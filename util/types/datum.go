@@ -69,6 +69,11 @@ func (d *Datum) Kind() byte {
 	return d.k
 }
 
+// SetKind sets kind of the datum.
+func (d *Datum) SetKind(kind byte) {
+	d.k = kind
+}
+
 // Collation gets the collation of the datum.
 func (d *Datum) Collation() byte {
 	return d.collation

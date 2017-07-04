@@ -17,6 +17,7 @@ import (
 	"math"
 	"strings"
 
+	//"github.com/ngaut/log"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/ast"
 	"github.com/pingcap/tidb/context"
@@ -632,6 +633,8 @@ func (b *executorBuilder) buildIndexScan(v *plan.PhysicalIndexScan) Executor {
 	table, _ := b.is.TableByID(v.Table.ID)
 	client := b.ctx.GetClient()
 	supportDesc := client.IsRequestTypeSupported(kv.ReqTypeIndex, kv.ReqSubTypeDesc)
+	//log.Infof("[yusp] supportDesc %t", supportDesc)
+	//log.Infof("[yusp] v.Desc %t", v.Desc)
 	e := &XSelectIndexExec{
 		tableInfo:            v.Table,
 		ctx:                  b.ctx,

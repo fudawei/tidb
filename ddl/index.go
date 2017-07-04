@@ -37,12 +37,36 @@ import (
 
 const maxPrefixLength = 3072
 
+// Find desc flag in all columns of the index.
+// If one desc flag is true, index desc flag will set true.
+func refineDescIdxColumns(idxColNames []*ast.IndexColName) {
+	hasDesc := false
+
+	for _, ic := range idxColNames {
+		if ic.Desc {
+			hasDesc = true
+			break
+		}
+	}
+
+	if hasDesc {
+		// For desc order works for each single column of the index in the future,
+		// we do not add a desc flag for index.
+		// We use the first column desc flag as index desc flag instead.
+		idxColNames[0].Desc = true
+		log.Infof("The index will turn to desc ordered.")
+	}
+}
+
 func buildIndexColumns(columns []*model.ColumnInfo, idxColNames []*ast.IndexColName) ([]*model.IndexColumn, error) {
 	// Build offsets.
 	idxColumns := make([]*model.IndexColumn, 0, len(idxColNames))
 
 	// The sum of length of all index columns.
 	sumLength := 0
+
+	// For multi columns indices, if one column marked as desc, all columns in this index will turn to desc order.
+	refineDescIdxColumns(idxColNames)
 
 	for _, ic := range idxColNames {
 		col := findCol(columns, ic.Column.Name.O)

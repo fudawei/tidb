@@ -16,6 +16,7 @@ package distsql
 import (
 	"time"
 
+	//"github.com/ngaut/log"
 	"github.com/juju/errors"
 	"github.com/pingcap/tidb/kv"
 	"github.com/pingcap/tidb/model"

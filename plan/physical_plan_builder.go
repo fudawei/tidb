@@ -146,6 +146,14 @@ func (p *DataSource) convert2IndexScan(prop *requiredProperty, index *model.Inde
 		}
 		var err error
 		is.Ranges, err = ranger.BuildIndexRange(p.ctx.GetSessionVars().StmtCtx, is.Table, is.Index, is.accessInAndEqCount, is.AccessCondition)
+		//for _, v := range is.Ranges {
+		//	for _, d := range v.LowVal {
+		//		log.Infof("[yusp] BuildIndexRange %d", d.GetInt64())
+		//	}
+		//	for _, d := range v.HighVal {
+		//		log.Infof("[yusp] BuildIndexRange %d", d.GetInt64())
+		//	}
+		//}
 		if err != nil {
 			if !terror.ErrorEqual(err, types.ErrTruncated) {
 				return nil, errors.Trace(err)

@@ -42,33 +42,37 @@ const (
 func ReverseComparableDatum(val *types.Datum) {
 	switch val.Kind() {
 	case types.KindInt64:
-		val.SetInt64(^val.GetInt64())
+		val.SetInt64(^val.GetInt64() + 1)
 	case types.KindUint64:
-		val.SetUint64(^val.GetUint64())
+		val.SetUint64(^val.GetUint64() + 1)
 	case types.KindString:
 		runes := []rune(val.GetString())
 		for i, v := range runes {
-			runes[i] = ^v
+			runes[i] = ^v + 1
 		}
 		val.SetString(string(runes))
 	case types.KindBytes:
 		bytes := val.GetBytes()
 		for i, v := range bytes {
-			bytes[i] = ^v
+			bytes[i] = ^v + 1
 		}
 		val.SetBytes([]byte(bytes))
 	case types.KindMysqlHex:
-		h := types.Hex{Value: ^int64(val.GetMysqlHex().ToNumber())}
+		h := types.Hex{Value: ^int64(val.GetMysqlHex().ToNumber()) + 1}
 		val.SetMysqlHex(h)
 	case types.KindMysqlBit:
-		b := types.Bit{Value: ^uint64(val.GetMysqlBit().ToNumber()), Width: types.MaxBitWidth}
+		b := types.Bit{Value: ^uint64(val.GetMysqlBit().ToNumber()) + 1, Width: types.MaxBitWidth}
 		val.SetMysqlBit(b)
 	case types.KindMysqlEnum:
-		e := types.Enum{Name: val.GetMysqlEnum().String(), Value: ^uint64(val.GetMysqlEnum().ToNumber())}
+		e := types.Enum{Name: val.GetMysqlEnum().String(), Value: ^uint64(val.GetMysqlEnum().ToNumber()) + 1}
 		val.SetMysqlEnum(e)
 	case types.KindMysqlSet:
-		s := types.Set{Name: val.GetMysqlSet().String(), Value: ^uint64(val.GetMysqlSet().ToNumber())}
+		s := types.Set{Name: val.GetMysqlSet().String(), Value: ^uint64(val.GetMysqlSet().ToNumber()) + 1}
 		val.SetMysqlSet(s)
+	case types.KindMinNotNull:
+		val.SetKind(types.KindMaxValue)
+	case types.KindMaxValue:
+		val.SetKind(types.KindMinNotNull)
 	//default:
 	//	return errors.Errorf("type %d is not comparable", val.Kind())
 	}
